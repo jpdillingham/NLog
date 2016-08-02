@@ -32,6 +32,7 @@
 // 
 
 using System.Threading;
+using NLog.LayoutRenderers;
 
 #if !SILVERLIGHT
 
@@ -44,6 +45,7 @@ namespace NLog.UnitTests
     using System.Text;
     using Microsoft.CSharp;
     using Xunit;
+    using NLog.Layouts;
 
     public class ConfigFileLocatorTests
     {
@@ -208,9 +210,36 @@ namespace NLog.UnitTests
 
         }
 
+        [Fact]
+        void TestAdhoc1()
+        {
+            //todo options as dictionary? or expanso-object?
+            LayoutRenderer.RegisterAdhocLayoutRenderer("the-answer", (info) => "42");
+            Layout l = "${the-answer}";
+            var result = l.Render(LogEventInfo.CreateNullEvent());
+            Assert.Equal("42", result);
+
+            //todo test with XML config
+        }
+
+        [Fact]
+        void TestAdhoc2()
+        {
+            LayoutRenderer.RegisterAdhocLayoutRenderer("message-length", (info) => info.Message.Length);
+            Layout l = "${message-length}";
+            var result = l.Render(LogEventInfo.Create(LogLevel.Error,"logger-adhoc","1234567890"));
+            Assert.Equal("10", result);
+
+            //todo test with XML config
+        }
+
         private string RunTest()
         {
-        string sourceCode = @"
+
+
+
+
+            string sourceCode = @"
 using System;
 using System.Reflection;
 using NLog;
@@ -251,7 +280,7 @@ class C1
         public static string RunAndRedirectOutput(string exeFile)
         {
             using (var proc = new Process())
-			{
+            {
 #if MONO
 				var sb = new StringBuilder();
 				sb.AppendFormat("\"{0}\" ", exeFile);
